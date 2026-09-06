@@ -1,0 +1,18 @@
+{
+  "name": "YEDIAM NENE — Don de sang",
+  "short_name": "YEDIAM NENE",
+  "description": "Un geste simple. Une vie sauvée. Coordination du don de sang en Mauritanie.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#141414",
+  "theme_color": "#DC1F26",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
