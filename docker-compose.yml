@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: yediam_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: yediam
+      POSTGRES_PASSWORD: yediam
+      POSTGRES_DB: yediam
+    ports:
+      - "5432:5432"
+    volumes:
+      - yediam_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yediam -d yediam"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  yediam_pgdata:
