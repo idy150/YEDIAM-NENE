@@ -3,8 +3,9 @@ import { Users, Hospital, Landmark, Siren, CheckCircle2, KeyRound, Wallet, Activ
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid, Legend } from 'recharts';
 import { api } from '../../api.js';
 import { Spinner, StatCard, PageHead } from '../../components/ui.jsx';
+import ForecastCard from '../../components/ForecastCard.jsx';
 
-const COLORS = ['#dc1f26', '#c9a227', '#141414', '#1e9e4a', '#e8800c', '#8a8a8a'];
+const COLORS = ['#d7262e', '#c99a2e', '#12131a', '#17945a', '#e27a0c', '#2f6fde', '#7b5cd6', '#7b7f8c'];
 
 export default function AdminDashboard() {
   const [dash, setDash] = useState(null);
@@ -36,7 +37,7 @@ export default function AdminDashboard() {
         <StatCard icon={<Wallet size={20} />} num={`${dash.revenue.toLocaleString('fr-FR')} MRU`} label="Revenus (simulés)" color="var(--green)" />
       </div>
 
-      <div className="grid-2" style={{ marginTop: 16 }}>
+      <div className="grid-auto" style={{ marginTop: 16 }}>
         <div className="card">
           <h3 style={{ fontSize: 15, marginBottom: 10 }}>Dons par mois</h3>
           <ResponsiveContainer width="100%" height={220}>
@@ -45,7 +46,7 @@ export default function AdminDashboard() {
               <XAxis dataKey="name" fontSize={11} />
               <YAxis fontSize={11} allowDecimals={false} />
               <Tooltip />
-              <Bar dataKey="n" fill="#dc1f26" radius={[6, 6, 0, 0]} name="Donneurs" />
+              <Bar dataKey="n" fill="#d7262e" radius={[6, 6, 0, 0]} name="Donneurs" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -57,13 +58,13 @@ export default function AdminDashboard() {
               <XAxis dataKey="name" fontSize={11} />
               <YAxis fontSize={11} allowDecimals={false} />
               <Tooltip />
-              <Bar dataKey="n" fill="#c9a227" radius={[6, 6, 0, 0]} name="Demandes" />
+              <Bar dataKey="n" fill="#c99a2e" radius={[6, 6, 0, 0]} name="Demandes" />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="grid-2" style={{ marginTop: 16 }}>
+      <div className="grid-auto" style={{ marginTop: 16 }}>
         <div className="card">
           <h3 style={{ fontSize: 15, marginBottom: 10 }}>Groupes sanguins les plus recherchés</h3>
           <ResponsiveContainer width="100%" height={220}>
@@ -83,20 +84,20 @@ export default function AdminDashboard() {
               <XAxis type="number" fontSize={11} allowDecimals={false} />
               <YAxis type="category" dataKey="name" fontSize={10} width={110} />
               <Tooltip />
-              <Bar dataKey="n" fill="#141414" radius={[0, 6, 6, 0]} name="Demandes" />
+              <Bar dataKey="n" fill="#12131a" radius={[0, 6, 6, 0]} name="Demandes" />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="grid-2" style={{ marginTop: 16 }}>
+      <div className="grid-auto" style={{ marginTop: 16 }}>
         <div className="card">
           <h3 style={{ fontSize: 15, marginBottom: 10 }}>Satisfaction des demandes</h3>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie data={[{ name: 'Satisfaites', value: stats.satisfied }, { name: 'Non satisfaites', value: stats.unsatisfied }]} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>
-                <Cell fill="#1e9e4a" />
-                <Cell fill="#dc1f26" />
+                <Cell fill="#17945a" />
+                <Cell fill="#d7262e" />
               </Pie>
               <Tooltip />
               <Legend fontSize={11} />
@@ -116,6 +117,8 @@ export default function AdminDashboard() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      <ForecastCard />
 
       <div className="card mt" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <Activity size={18} className="text-gold" />

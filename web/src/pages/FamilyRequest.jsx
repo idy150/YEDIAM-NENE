@@ -52,9 +52,19 @@ export default function FamilyRequest() {
           <p className="muted mt">
             Paiement de <b>100 MRU</b> simulé — référence <b>{done.payment_reference}</b>.
             <br />
-            Votre demande sera diffusée aux donneurs après validation.
+            Votre demande sera diffusée aux donneurs compatibles après validation.
           </p>
-          <Link to="/" className="btn btn-red mt">Retour à l'accueil</Link>
+          {done.tracking_code && (
+            <div className="card mt" style={{ background: 'var(--paper)', boxShadow: 'none' }}>
+              <div className="muted" style={{ fontWeight: 700 }}>Votre code de suivi</div>
+              <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: '0.04em', margin: '4px 0' }}>{done.tracking_code}</div>
+              <div className="muted">Conservez-le : il permet de suivre la mobilisation des donneurs sans compte.</div>
+            </div>
+          )}
+          {done.tracking_code && (
+            <Link to={`/suivi/${done.tracking_code}`} className="btn btn-red mt">Suivre ma demande</Link>
+          )}
+          <Link to="/" className="btn btn-outline mt">Retour à l'accueil</Link>
         </div>
       </div>
     );

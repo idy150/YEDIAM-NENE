@@ -61,3 +61,67 @@ export const ROLE_LABELS = {
 };
 
 export const TARGET = 5;
+export const CAMPAIGN_STATUS = {
+  draft: { label: 'Brouillon', color: 'var(--gray)' },
+  active: { label: 'En cours', color: 'var(--green)' },
+  completed: { label: 'Terminée', color: 'var(--ink-2)' },
+  cancelled: { label: 'Annulée', color: 'var(--gray)' },
+};
+
+export const CAMPAIGN_TYPES = {
+  collecte: 'Collecte de sang',
+  sensibilisation: 'Sensibilisation',
+};
+
+// Couche FinTech solidaire
+export const CONTRIBUTION_PURPOSES = {
+  general: { label: 'Fonds solidaire', sub: 'Affecté là où le besoin est le plus fort' },
+  campaign: { label: 'Une campagne', sub: 'Soutenir une collecte précise' },
+  transport: { label: 'Transport des donneurs', sub: 'Rembourser les déplacements' },
+  sponsoring: { label: 'Sponsoring', sub: 'Entreprise partenaire d’une campagne' },
+};
+
+export const CONTRIBUTOR_TYPES = {
+  individual: 'Particulier',
+  company: 'Entreprise',
+  ngo: 'ONG / Institution',
+};
+
+export const PAYMENT_LABELS = {
+  bankily: 'Bankily',
+  masrivi: 'Masrivi',
+  sedad: 'Sedad',
+  bank_transfer: 'Virement bancaire',
+  card: 'Carte bancaire',
+};
+
+export const EXPENSE_CATEGORIES = {
+  transport: { label: 'Transport donneurs', color: '#2f6fde' },
+  collation: { label: 'Collations', color: '#c99a2e' },
+  logistique: { label: 'Logistique', color: '#d7262e' },
+  communication: { label: 'Communication', color: '#7b5cd6' },
+  materiel: { label: 'Matériel', color: '#17945a' },
+  autre: { label: 'Autre', color: '#7b7f8c' },
+};
+
+export const TRANSPORT_STATUS = {
+  pending: { label: 'En attente', color: 'var(--gold)' },
+  approved: { label: 'Approuvé', color: 'var(--blue)' },
+  paid: { label: 'Versé', color: 'var(--green)' },
+  refused: { label: 'Refusé', color: 'var(--gray)' },
+};
+
+// Compatibilité (globules rouges) : receveur → donneurs compatibles
+export const COMPATIBLE_DONORS = {
+  'O-': ['O-'],
+  'O+': ['O+', 'O-'],
+  'A-': ['A-', 'O-'],
+  'A+': ['A+', 'A-', 'O+', 'O-'],
+  'B-': ['B-', 'O-'],
+  'B+': ['B+', 'B-', 'O+', 'O-'],
+  'AB-': ['AB-', 'A-', 'B-', 'O-'],
+  'AB+': ['AB+', 'AB-', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-'],
+};
+
+export const homeFor = (role) =>
+  ({ super_admin: '/admin', hospital_admin: '/hopital', donor: '/donneur', blood_bank_admin: '/banque' }[role] || '/');

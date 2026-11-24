@@ -109,8 +109,10 @@ router.get(
 
     const responses = (await query(
       `SELECT n.id, n.response, n.responded_at, n.status AS notification_status,
-              d.nom AS donor_name, d.blood_group, d.wilaya, d.telephone, d.quartier
+              d.nom AS donor_name, d.blood_group, d.blood_group AS donor_group, d.wilaya, d.telephone, d.quartier,
+              dn.status AS donation_status
        FROM notifications n JOIN donors d ON d.id = n.donor_id
+       LEFT JOIN donations dn ON dn.donor_id = n.donor_id AND dn.request_id = n.request_id
        WHERE n.request_id = $1 AND n.response IS NOT NULL
        ORDER BY n.responded_at DESC`,
       [req.params.id]
@@ -154,6 +156,45 @@ router.post(
   })
 );
 
+// Confirmation du don par l'hôpital (don réalisé ou donneur absent).
+// Le dernier don du donneur n'est mis à jour qu'une fois le don réellement effectué.
+router.post(
+  '/notifications/:id/donation',
+  asyncHandler(async (req, res) => {
+    const hospital = await getOwnHospital(req.user.id);
+    if (!hospital) throw new ApiError(404, 'Aucun hôpital associé à ce compte');
+    const { outcome } = req.body;
+    if (!['completed', 'cancelled'].includes(outcome)) throw new ApiError(400, 'Résultat invalide');
+
+    const { rows } = await query(
+      `SELECT n.donor_id, n.request_id, r.blood_group FROM notifications n
+       JOIN blood_requests r ON r.id = n.request_id
+       WHERE n.id = $1 AND r.hospital_id = $2 AND n.response = 'positive'`,
+      [req.params.id, hospital.id]
+    );
+    if (!rows[0]) throw new ApiError(404, 'Réponse introuvable');
+    const { donor_id, request_id, blood_group } = rows[0];
+
+    const upd = await query(
+      `UPDATE donations SET status = $1, confirmed_at = now(), donation_date = CURRENT_DATE
+       WHERE donor_id = $2 AND request_id = $3 RETURNING id`,
+      [outcome, donor_id, request_id]
+    );
+    if (!upd.rowCount) {
+      await query(
+        `INSERT INTO donations (donor_id, hospital_id, request_id, blood_group, status, confirmed_at)
+         VALUES ($1, $2, $3, $4, $5, now())`,
+        [donor_id, hospital.id, request_id, blood_group, outcome]
+      );
+    }
+    if (outcome === 'completed') {
+      await query('UPDATE donors SET last_donation_date = CURRENT_DATE WHERE id = $1', [donor_id]);
+    }
+    await logActivity(req.user.id, outcome === 'completed' ? 'donation_confirmed' : 'donation_no_show', 'blood_request', request_id);
+    res.json({ message: outcome === 'completed' ? 'Don confirmé. Merci au donneur !' : 'Absence enregistrée.' });
+  })
+);
+
 // Toutes les réponses positives reçues par l'hôpital
 router.get(
   '/responses',
@@ -162,10 +203,12 @@ router.get(
     if (!hospital) throw new ApiError(404, 'Aucun hôpital associé à ce compte');
     const { rows } = await query(
       `SELECT n.id, n.response, n.responded_at, r.blood_group, r.quantity, r.urgency, r.id AS request_id,
-              d.nom AS donor_name, d.telephone, d.wilaya, d.blood_group AS donor_group
+              d.nom AS donor_name, d.telephone, d.wilaya, d.blood_group AS donor_group,
+              dn.status AS donation_status
        FROM notifications n
        JOIN blood_requests r ON r.id = n.request_id
        JOIN donors d ON d.id = n.donor_id
+       LEFT JOIN donations dn ON dn.donor_id = n.donor_id AND dn.request_id = n.request_id
        WHERE r.hospital_id = $1 AND r.requester_type = 'hospital' AND n.response = 'positive'
        ORDER BY n.responded_at DESC LIMIT 200`,
       [hospital.id]

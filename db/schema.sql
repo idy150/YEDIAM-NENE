@@ -202,4 +202,105 @@ CREATE TRIGGER trg_blood_banks_updated BEFORE UPDATE ON blood_banks FOR EACH ROW
 DROP TRIGGER IF EXISTS trg_blood_stocks_updated ON blood_stocks;
 CREATE TRIGGER trg_blood_stocks_updated BEFORE UPDATE ON blood_stocks FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+-- ============================================================
+-- v0.2 — Suivi famille, campagnes, couche FinTech solidaire
+-- Le sang reste gratuit : les fonds servent à la logistique et aux campagnes.
+-- ============================================================
+
+-- Code de suivi public pour les demandes (familles sans compte)
+ALTER TABLE blood_requests ADD COLUMN IF NOT EXISTS tracking_code TEXT UNIQUE;
+-- Confirmation du don par l'hôpital
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;
+
+-- Campagnes de don et de sensibilisation
+CREATE TABLE IF NOT EXISTS campaigns (
+  id             SERIAL PRIMARY KEY,
+  title          TEXT NOT NULL,
+  description    TEXT,
+  type           TEXT NOT NULL DEFAULT 'collecte' CHECK (type IN ('collecte', 'sensibilisation')),
+  wilaya         TEXT,
+  location       TEXT,
+  start_date     DATE NOT NULL,
+  end_date       DATE NOT NULL,
+  organizer_type TEXT NOT NULL CHECK (organizer_type IN ('admin', 'hospital', 'blood_bank')),
+  organizer_id   INT,
+  organizer_name TEXT NOT NULL,
+  target_donors  INT NOT NULL DEFAULT 0,
+  target_amount  NUMERIC(12,2) NOT NULL DEFAULT 0,
+  target_groups  TEXT[],
+  status         TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('draft', 'active', 'completed', 'cancelled')),
+  created_by     INT REFERENCES users(id) ON DELETE SET NULL,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Inscriptions des donneurs aux collectes
+CREATE TABLE IF NOT EXISTS campaign_participants (
+  id          SERIAL PRIMARY KEY,
+  campaign_id INT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  donor_id    INT NOT NULL REFERENCES donors(id) ON DELETE CASCADE,
+  status      TEXT NOT NULL DEFAULT 'registered' CHECK (status IN ('registered', 'donated', 'cancelled')),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (campaign_id, donor_id)
+);
+
+-- Contributions financières volontaires (particuliers, entreprises, ONG)
+CREATE TABLE IF NOT EXISTS contributions (
+  id                SERIAL PRIMARY KEY,
+  reference         TEXT NOT NULL UNIQUE,
+  campaign_id       INT REFERENCES campaigns(id) ON DELETE SET NULL,
+  purpose           TEXT NOT NULL DEFAULT 'general' CHECK (purpose IN ('general', 'campaign', 'transport', 'sponsoring')),
+  contributor_type  TEXT NOT NULL DEFAULT 'individual' CHECK (contributor_type IN ('individual', 'company', 'ngo')),
+  contributor_name  TEXT NOT NULL,
+  contributor_phone TEXT,
+  contributor_email TEXT,
+  anonymous         BOOLEAN NOT NULL DEFAULT FALSE,
+  amount            NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+  payment_method    TEXT NOT NULL CHECK (payment_method IN ('bankily', 'masrivi', 'sedad', 'bank_transfer', 'card')),
+  status            TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'failed', 'refunded')),
+  provider_reference TEXT,
+  message           TEXT,
+  user_id           INT REFERENCES users(id) ON DELETE SET NULL,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  paid_at           TIMESTAMPTZ
+);
+
+-- Demandes de soutien transport des donneurs
+CREATE TABLE IF NOT EXISTS transport_requests (
+  id           SERIAL PRIMARY KEY,
+  donor_id     INT NOT NULL REFERENCES donors(id) ON DELETE CASCADE,
+  request_id   INT REFERENCES blood_requests(id) ON DELETE SET NULL,
+  campaign_id  INT REFERENCES campaigns(id) ON DELETE SET NULL,
+  amount       NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+  note         TEXT,
+  status       TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'paid', 'refused')),
+  decided_by   INT REFERENCES users(id) ON DELETE SET NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  decided_at   TIMESTAMPTZ
+);
+
+-- Utilisation des fonds (transparence)
+CREATE TABLE IF NOT EXISTS fund_expenses (
+  id                   SERIAL PRIMARY KEY,
+  reference            TEXT NOT NULL UNIQUE,
+  campaign_id          INT REFERENCES campaigns(id) ON DELETE SET NULL,
+  transport_request_id INT REFERENCES transport_requests(id) ON DELETE SET NULL,
+  category             TEXT NOT NULL CHECK (category IN ('transport', 'collation', 'logistique', 'communication', 'materiel', 'autre')),
+  amount               NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+  description          TEXT NOT NULL,
+  beneficiary          TEXT,
+  spent_at             DATE NOT NULL DEFAULT CURRENT_DATE,
+  recorded_by          INT REFERENCES users(id) ON DELETE SET NULL,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_campaigns_status        ON campaigns (status);
+CREATE INDEX IF NOT EXISTS idx_contributions_campaign  ON contributions (campaign_id);
+CREATE INDEX IF NOT EXISTS idx_contributions_status    ON contributions (status);
+CREATE INDEX IF NOT EXISTS idx_expenses_campaign       ON fund_expenses (campaign_id);
+CREATE INDEX IF NOT EXISTS idx_transport_status        ON transport_requests (status);
+
+DROP TRIGGER IF EXISTS trg_campaigns_updated ON campaigns;
+CREATE TRIGGER trg_campaigns_updated BEFORE UPDATE ON campaigns FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
 COMMIT;

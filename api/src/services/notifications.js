@@ -1,19 +1,24 @@
 import { query } from '../db.js';
-import { POSITIVE_TARGET } from '../config.js';
+import { POSITIVE_TARGET, COMPATIBLE_DONORS, DONATION_INTERVAL_DAYS } from '../config.js';
 import { logActivity } from '../middleware/auth.js';
 
-// Sélectionne les donneurs compatibles : même groupe sanguin, disponibles,
-// comptes actifs (si compte lié), priorité à la même wilaya.
+// Sélectionne les donneurs compatibles :
+//  - groupe compatible (globules rouges), le groupe identique en priorité ;
+//  - disponibles, comptes actifs (si compte lié) ;
+//  - éligibles : dernier don il y a plus de DONATION_INTERVAL_DAYS jours ;
+//  - priorité à la même wilaya.
 async function findMatchingDonors(request, limit = 60) {
+  const groups = COMPATIBLE_DONORS[request.blood_group] || [request.blood_group];
   const { rows } = await query(
     `SELECT d.* FROM donors d
      LEFT JOIN users u ON u.id = d.user_id
-     WHERE d.blood_group = $1
+     WHERE d.blood_group = ANY($1::text[])
        AND d.available = TRUE
        AND (d.user_id IS NULL OR u.status = 'active')
-     ORDER BY (d.wilaya = $2) DESC, d.last_donation_date IS NULL DESC, d.id
+       AND (d.last_donation_date IS NULL OR d.last_donation_date <= CURRENT_DATE - $4::int)
+     ORDER BY (d.blood_group = $5) DESC, (d.wilaya = $2) DESC, d.last_donation_date IS NULL DESC, d.id
      LIMIT $3`,
-    [request.blood_group, request.wilaya || '', limit]
+    [groups, request.wilaya || '', limit, DONATION_INTERVAL_DAYS, request.blood_group]
   );
   return rows;
 }

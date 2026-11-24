@@ -86,6 +86,36 @@ Ouvrir **http://localhost:5173** — le frontend redirige `/api/*` vers l'API (p
 
 Configuration : copier `api/.env.example` vers `api/.env` et adapter si besoin (par défaut : base `postgres://yediam:yediam@localhost:5432/yediam`, clé JWT de dev).
 
+## ✨ Nouveautés v0.2 — UI/UX, campagnes et couche FinTech solidaire
+
+### 🎨 Refonte UI/UX
+- Nouveau design system (police Inter, palette rouge sang / encre / or, cartes, badges, barres de progression, animations sobres, `prefers-reduced-motion`).
+- **Site public** avec navigation, pied de page et page d'accueil repensée : hero, chiffres clés en direct, workflow en 6 étapes, espaces par acteur, campagnes en cours, section « Le sang reste gratuit ».
+- Espaces pros : barre latérale regroupée par sections avec icônes, carte utilisateur ; espace donneur : navigation basse flottante à 5 onglets.
+
+### 🩸 Workflow d'urgence renforcé
+- **Compatibilité sanguine** : un besoin A+ alerte aussi A-, O+ et O- (groupe identique en priorité, puis même wilaya).
+- **Délai entre deux dons (90 jours)** : seuls les donneurs éligibles sont alertés ; le donneur voit sa date de prochain don.
+- Le dernier don n'est plus mis à jour au simple « Je peux donner » : l'**hôpital confirme le don** (« Don réalisé » / « Absent »).
+- Un donneur ne peut plus répondre à une demande déjà couverte ou clôturée.
+- **Suivi famille sans compte** : code de suivi (`/suivi/:code`) avec chronologie et actualisation automatique.
+
+### 📣 Campagnes
+- Création/gestion par le Super Admin, les hôpitaux et les banques de sang (collecte ou sensibilisation, groupes prioritaires, objectifs donneurs et budget).
+- Pages publiques `/campagnes` et `/campagnes/:id`, inscription des donneurs (« Je participe »), confirmation des dons de campagne, partage WhatsApp.
+
+### 💳 FinTech solidaire (Fintech Mauritanie Hackathon 2026)
+- **Contributions volontaires** (`/soutenir`) : particuliers, entreprises, ONG ; fonds général, campagne, transport ou sponsoring ; Bankily / Masrivi / Sedad / virement / carte (**simulés**, branchés après accord des partenaires).
+- **Reçus numériques** (`/recu/:reference`) imprimables, vérifiables, données personnelles masquées.
+- **Transparence** (`/transparence`) : collecté, utilisé, solde, par mois, par catégorie, par campagne, dernières opérations.
+- **Soutien transport des donneurs** : demande depuis l'espace donneur, validation et versement par l'admin (dépense tracée automatiquement).
+- **Pilotage financier** (`/admin/finances`) : contributions, dépenses (contrôle du solde), soutiens transport.
+- **Prévision des besoins** (tableau de bord admin) : moyenne pondérée des 3 derniers mois par groupe vs stocks, niveau de risque.
+
+> Le sang reste gratuit : aucune transaction ne porte sur le sang ou les poches.
+
+Nouvelles tables : `campaigns`, `campaign_participants`, `contributions`, `transport_requests`, `fund_expenses` (+ `blood_requests.tracking_code`, `donations.confirmed_at`). Nouvelles routes API : `/api/campaigns/*`, `/api/finance/*`, `/api/public/{stats,campaigns,contributions,receipts,transparency,track}`.
+
 ## 🎯 Fonctionnalités par rôle
 
 ### 🛡️ Super Admin (web, dashboard professionnel)
@@ -123,6 +153,7 @@ Formulaire court « Besoin urgent pour un proche » (100 MRU, **paiement simulé
 ```bash
 # Test de fumée navigateur (Chrome headless) : rendu de chaque rôle + pages publiques
 node scripts/smoke.mjs
+# Linux/macOS : CHROME_PATH=/usr/bin/google-chrome node scripts/smoke.mjs
 ```
 
 L'API et le web doivent tourner (`npm run api:dev` + `npm run web:dev`).
