@@ -1,3 +1,4 @@
+import AuthShell from '../components/AuthShell.jsx';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Droplets, LogIn } from 'lucide-react';
@@ -27,11 +28,13 @@ export default function Login() {
   };
 
   return (
-    <div className="panel" style={{ paddingTop: 30 }}>
-      <div className="brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
-        <span className="brand-drop"><Droplets size={20} /></span>
-        <span>YEDIAM NENE<small>Connexion</small></span>
-      </div>
+    <AuthShell
+      eyebrow="Espace sécurisé"
+      title="Bon retour parmi nous."
+      lead="Donneurs, hôpitaux, banques de sang et administration : un seul accès, un espace adapté à chaque rôle."
+      points={["Alertes d’urgence pour votre groupe sanguin", "Suivi des demandes et des dons en temps réel", "Données protégées, accès par rôle"]}
+      tone="dark"
+    >
 
       <form className="card" onSubmit={submit}>
         {error && <Alert type="error">{error}</Alert>}
@@ -64,6 +67,6 @@ export default function Login() {
       <p style={{ textAlign: 'center', marginTop: 14 }}>
         <Link to="/" className="text-gray" style={{ fontSize: 14 }}>← Retour à l'accueil</Link>
       </p>
-    </div>
+    </AuthShell>
   );
 }

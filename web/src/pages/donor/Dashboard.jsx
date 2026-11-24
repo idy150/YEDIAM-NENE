@@ -1,10 +1,42 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Siren, HeartHandshake, History, CheckCircle2, CalendarHeart } from 'lucide-react';
+import { Siren, HeartHandshake, History, CheckCircle2, CalendarHeart, Award, Droplet, Megaphone } from 'lucide-react';
 import { api } from '../../api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { BloodBadge, Spinner, EmptyState, Progress, fmtDate } from '../../components/ui.jsx';
 import { URGENCY } from '../../constants.js';
+
+// Badges de reconnaissance (motivation, sans classement entre donneurs)
+const BADGES = [
+  { id: 'ready', label: 'Prêt à aider', hint: 'Répondre « Je peux donner »', icon: <HeartHandshake size={18} />, ok: (c) => c.responded >= 1 },
+  { id: 'first', label: 'Premier don', hint: 'Un don confirmé', icon: <Droplet size={18} />, ok: (c) => c.donations >= 1 },
+  { id: 'community', label: 'Solidaire', hint: 'Rejoindre une campagne', icon: <Megaphone size={18} />, ok: (c) => c.campaigns >= 1 },
+  { id: 'hero', label: 'Héros du sang', hint: '3 dons confirmés', icon: <Award size={18} />, ok: (c) => c.donations >= 3 },
+];
+
+function ImpactCard({ counts }) {
+  const lives = counts.donations * 3;
+  return (
+    <div className="card">
+      <div className="flex between">
+        <div className="card-title" style={{ marginBottom: 0 }}><Award size={18} className="text-gold" /> Mon impact</div>
+        {lives > 0 && <span className="pill pill-red">jusqu’à {lives} vies aidées</span>}
+      </div>
+      <div className="badges mt">
+        {BADGES.map((b) => {
+          const ok = b.ok(counts);
+          return (
+            <div key={b.id} className={`badge-tile ${ok ? 'earned' : ''}`} title={b.hint}>
+              <span className="bt-ico">{b.icon}</span>
+              <b>{b.label}</b>
+              <small>{ok ? 'Obtenu' : b.hint}</small>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function DonorDashboard() {
   const { user, reload } = useAuth();
@@ -72,6 +104,8 @@ export default function DonorDashboard() {
           <Progress value={progressDays} max={100} tone={elig.eligible ? 'green' : 'gold'} />
         </div>
       )}
+
+      <ImpactCard counts={counts} />
 
       <div className="stats-grid mt">
         <Link to="/donneur/urgences" className="stat-card" style={{ background: counts.urgent > 0 ? 'var(--red)' : '#fff', color: counts.urgent > 0 ? '#fff' : 'inherit', textDecoration: 'none' }}>

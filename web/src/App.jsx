@@ -1,57 +1,58 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import { Spinner } from './components/ui.jsx';
 import { DonorLayout, AdminLayout, PublicLayout } from './components/Layout.jsx';
-import CampaignManager from './components/CampaignManager.jsx';
+const CampaignManager = lazy(() => import('./components/CampaignManager.jsx'));
 import { homeFor } from './constants.js';
 
 // Pages publiques
-import Home from './pages/Home.jsx';
-import Login from './pages/Login.jsx';
-import RegisterDonor from './pages/RegisterDonor.jsx';
-import HospitalJoin from './pages/HospitalJoin.jsx';
-import FamilyRequest from './pages/FamilyRequest.jsx';
-import ForgotPassword from './pages/ForgotPassword.jsx';
-import Campaigns from './pages/public/Campaigns.jsx';
-import CampaignDetail from './pages/public/CampaignDetail.jsx';
-import Support from './pages/public/Support.jsx';
-import Receipt from './pages/public/Receipt.jsx';
-import Transparency from './pages/public/Transparency.jsx';
-import Track from './pages/public/Track.jsx';
+const Home = lazy(() => import('./pages/Home.jsx'));
+const Login = lazy(() => import('./pages/Login.jsx'));
+const RegisterDonor = lazy(() => import('./pages/RegisterDonor.jsx'));
+const HospitalJoin = lazy(() => import('./pages/HospitalJoin.jsx'));
+const FamilyRequest = lazy(() => import('./pages/FamilyRequest.jsx'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'));
+const Campaigns = lazy(() => import('./pages/public/Campaigns.jsx'));
+const CampaignDetail = lazy(() => import('./pages/public/CampaignDetail.jsx'));
+const Support = lazy(() => import('./pages/public/Support.jsx'));
+const Receipt = lazy(() => import('./pages/public/Receipt.jsx'));
+const Transparency = lazy(() => import('./pages/public/Transparency.jsx'));
+const Track = lazy(() => import('./pages/public/Track.jsx'));
 
 // Super Admin
-import AdminDashboard from './pages/admin/Dashboard.jsx';
-import AdminHospitals from './pages/admin/Hospitals.jsx';
-import AdminDonors from './pages/admin/Donors.jsx';
-import AdminRequests from './pages/admin/Requests.jsx';
-import AdminPayments from './pages/admin/Payments.jsx';
-import AdminSubscriptions from './pages/admin/Subscriptions.jsx';
-import AdminLogs from './pages/admin/Logs.jsx';
-import AdminFinances from './pages/admin/Finances.jsx';
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard.jsx'));
+const AdminHospitals = lazy(() => import('./pages/admin/Hospitals.jsx'));
+const AdminDonors = lazy(() => import('./pages/admin/Donors.jsx'));
+const AdminRequests = lazy(() => import('./pages/admin/Requests.jsx'));
+const AdminPayments = lazy(() => import('./pages/admin/Payments.jsx'));
+const AdminSubscriptions = lazy(() => import('./pages/admin/Subscriptions.jsx'));
+const AdminLogs = lazy(() => import('./pages/admin/Logs.jsx'));
+const AdminFinances = lazy(() => import('./pages/admin/Finances.jsx'));
 
 // Hôpital
-import HospDashboard from './pages/hospital/Dashboard.jsx';
-import HospNewRequest from './pages/hospital/NewRequest.jsx';
-import HospRequests from './pages/hospital/Requests.jsx';
-import HospResponses from './pages/hospital/Responses.jsx';
-import HospBloodBanks from './pages/hospital/BloodBanks.jsx';
-import HospUsers from './pages/hospital/Users.jsx';
-import HospHistory from './pages/hospital/History.jsx';
-import HospSubscription from './pages/hospital/Subscription.jsx';
-import HospProfile from './pages/hospital/Profile.jsx';
+const HospDashboard = lazy(() => import('./pages/hospital/Dashboard.jsx'));
+const HospNewRequest = lazy(() => import('./pages/hospital/NewRequest.jsx'));
+const HospRequests = lazy(() => import('./pages/hospital/Requests.jsx'));
+const HospResponses = lazy(() => import('./pages/hospital/Responses.jsx'));
+const HospBloodBanks = lazy(() => import('./pages/hospital/BloodBanks.jsx'));
+const HospUsers = lazy(() => import('./pages/hospital/Users.jsx'));
+const HospHistory = lazy(() => import('./pages/hospital/History.jsx'));
+const HospSubscription = lazy(() => import('./pages/hospital/Subscription.jsx'));
+const HospProfile = lazy(() => import('./pages/hospital/Profile.jsx'));
 
 // Donneur
-import DonorDashboard from './pages/donor/Dashboard.jsx';
-import DonorUrgences from './pages/donor/Urgences.jsx';
-import DonorHistory from './pages/donor/History.jsx';
-import DonorProfile from './pages/donor/Profile.jsx';
-import DonorCampaigns from './pages/donor/Campaigns.jsx';
+const DonorDashboard = lazy(() => import('./pages/donor/Dashboard.jsx'));
+const DonorUrgences = lazy(() => import('./pages/donor/Urgences.jsx'));
+const DonorHistory = lazy(() => import('./pages/donor/History.jsx'));
+const DonorProfile = lazy(() => import('./pages/donor/Profile.jsx'));
+const DonorCampaigns = lazy(() => import('./pages/donor/Campaigns.jsx'));
 
 // Banque de sang
-import BankDashboard from './pages/bloodbank/Dashboard.jsx';
-import BankMovements from './pages/bloodbank/Movements.jsx';
-import BankRequests from './pages/bloodbank/Requests.jsx';
-import BankProfile from './pages/bloodbank/Profile.jsx';
+const BankDashboard = lazy(() => import('./pages/bloodbank/Dashboard.jsx'));
+const BankMovements = lazy(() => import('./pages/bloodbank/Movements.jsx'));
+const BankRequests = lazy(() => import('./pages/bloodbank/Requests.jsx'));
+const BankProfile = lazy(() => import('./pages/bloodbank/Profile.jsx'));
 
 function RequireRole({ role, children }) {
   const { user, loading } = useAuth();
@@ -68,6 +69,7 @@ export default function App() {
   if (loading) return <Spinner />;
 
   return (
+    <Suspense fallback={<Spinner />}>
     <Routes>
       {/* Site public */}
       <Route element={<PublicLayout />}>
@@ -134,5 +136,6 @@ export default function App() {
       {/* Déjà connecté → redirection vers son espace */}
       <Route path="*" element={user ? <Navigate to={homeFor(user.role)} replace /> : <Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 }

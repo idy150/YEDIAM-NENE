@@ -1,3 +1,4 @@
+import AuthShell from '../components/AuthShell.jsx';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Droplets, Hospital, CheckCircle2 } from 'lucide-react';
@@ -48,11 +49,13 @@ export default function HospitalJoin() {
   }
 
   return (
-    <div className="panel" style={{ paddingTop: 30 }}>
-      <div className="brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
-        <span className="brand-drop"><Droplets size={20} /></span>
-        <span>YEDIAM NENE<small>Adhésion hôpital</small></span>
-      </div>
+    <AuthShell
+      eyebrow="Établissements de santé"
+      title="Mobilisez des donneurs en quelques minutes."
+      lead="Rejoignez le réseau national : vos demandes urgentes atteignent directement les donneurs compatibles de votre zone."
+      points={["Demandes urgentes en 30 secondes", "Réponses des donneurs en temps réel", "Stocks des banques de sang visibles", "Campagnes de collecte et statistiques"]}
+      tone="dark"
+    >
 
       <form className="card" onSubmit={submit}>
         <h3 style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -119,6 +122,6 @@ export default function HospitalJoin() {
 
         <button className="btn btn-red" disabled={busy}>{busy ? 'Envoi…' : 'Envoyer la demande'}</button>
       </form>
-    </div>
+    </AuthShell>
   );
 }

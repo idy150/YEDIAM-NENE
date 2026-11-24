@@ -1,3 +1,4 @@
+import AuthShell from '../components/AuthShell.jsx';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Droplets } from 'lucide-react';
@@ -15,11 +16,13 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="panel" style={{ paddingTop: 30 }}>
-      <div className="brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
-        <span className="brand-drop"><Droplets size={20} /></span>
-        <span>YEDIAM NENE<small>Mot de passe oublié</small></span>
-      </div>
+    <AuthShell
+      eyebrow="Compte"
+      title="Mot de passe oublié"
+      lead="Indiquez votre email ou téléphone : nous vous aiderons à récupérer l’accès à votre espace."
+      points={[]}
+      tone="dark"
+    >
       <form className="card" onSubmit={submit}>
         {msg && <Alert type="info">{msg}</Alert>}
         <div className="field">
@@ -32,6 +35,6 @@ export default function ForgotPassword() {
           <Link to="/login" className="text-red" style={{ fontSize: 14, fontWeight: 700 }}>← Retour à la connexion</Link>
         </p>
       </form>
-    </div>
+    </AuthShell>
   );
 }

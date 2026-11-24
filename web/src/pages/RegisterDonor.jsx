@@ -1,3 +1,4 @@
+import AuthShell from '../components/AuthShell.jsx';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Droplets, HeartHandshake } from 'lucide-react';
@@ -36,11 +37,13 @@ export default function RegisterDonor() {
   };
 
   return (
-    <div className="panel" style={{ paddingTop: 30 }}>
-      <div className="brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
-        <span className="brand-drop"><Droplets size={20} /></span>
-        <span>YEDIAM NENE<small>Devenir donneur</small></span>
-      </div>
+    <AuthShell
+      eyebrow="Devenir donneur"
+      title="Votre sang peut sauver jusqu’à trois vies."
+      lead="Inscription en une minute. Vous ne serez alerté que lorsqu’un patient compatible a besoin de vous, près de chez vous."
+      points={["Gratuit et bénévole, toujours", "Vous choisissez quand vous êtes disponible", "Rappel automatique du délai entre deux dons", "Transport remboursable par le fonds solidaire"]}
+      tone="red"
+    >
 
       <form className="card" onSubmit={submit}>
         <h3 style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -103,6 +106,6 @@ export default function RegisterDonor() {
           <Link to="/login" className="text-red" style={{ fontWeight: 700 }}>Déjà inscrit ? Se connecter</Link>
         </p>
       </form>
-    </div>
+    </AuthShell>
   );
 }

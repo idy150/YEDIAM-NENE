@@ -106,7 +106,7 @@ async function main() {
       { label: 'Super Admin', id: 'admin@yediam.mr', pwd: 'Admin123!', home: '/admin', extra: [['/admin/finances', ['Fonds solidaires', 'Soutien transport']], ['/admin/campagnes', ['Grande collecte de Nouakchott']]], checks: ['Dashboard national', 'Hôpitaux', 'Prévision des besoins'] },
       { label: 'Hôpital', id: 'admin.hnn@yediam.mr', pwd: 'Hopital123!', home: '/hopital', extra: [['/hopital/campagnes', ['Nouvelle campagne']]], checks: ['Hôpital National', 'NOUVELLE DEMANDE URGENTE'] },
       { label: 'Banque de sang', id: 'cnts@yediam.mr', pwd: 'Banque123!', home: '/banque', extra: [['/banque/campagnes', ['Grande collecte de Nouakchott']]], checks: ['Stocks par groupe', 'Poches en stock'] },
-      { label: 'Donneur', id: 'donneur1@yediam.mr', pwd: 'Donneur123!', home: '/donneur', extra: [['/donneur/campagnes', ['Je participe']], ['/donneur/urgences', ['Urgences']]], checks: ['Groupe O+', 'Disponible pour donner', 'Prochain don'] },
+      { label: 'Donneur', id: 'donneur1@yediam.mr', pwd: 'Donneur123!', home: '/donneur', extra: [['/donneur/campagnes', ['Je participe']], ['/donneur/urgences', ['Urgences']]], checks: ['Groupe O+', 'Disponible pour donner', 'Prochain don', 'Mon impact'] },
     ];
 
     for (const role of roles) {
@@ -145,7 +145,7 @@ async function main() {
       ['/suivi/YN-DEMO-2026', ['Suivre une demande', 'Demande reçue']],
       ['/besoin-urgent', ['Besoin urgent pour un proche', '100 MRU']],
       ['/adhesion-hopital', ["Nom de l'hôpital", 'Nom du responsable']],
-      ['/inscription', ['Groupe sanguin (essentiel)']],
+      ['/inscription', ['Groupe sanguin (essentiel)', 'Votre sang peut sauver']],
       ['/login', ['Comptes de démonstration']],
     ]) {
       await evaluate(`location.href = ${JSON.stringify(BASE + path)}`);

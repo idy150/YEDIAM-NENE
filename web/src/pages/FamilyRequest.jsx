@@ -1,3 +1,4 @@
+import AuthShell from '../components/AuthShell.jsx';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Droplets, Siren, CheckCircle2 } from 'lucide-react';
@@ -71,11 +72,13 @@ export default function FamilyRequest() {
   }
 
   return (
-    <div className="panel" style={{ paddingTop: 30 }}>
-      <div className="brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
-        <span className="brand-drop"><Droplets size={20} /></span>
-        <span>YEDIAM NENE<small>Besoin urgent</small></span>
-      </div>
+    <AuthShell
+      eyebrow="Urgence famille"
+      title="Un proche a besoin de sang ?"
+      lead="Remplissez l’essentiel : notre équipe valide la demande puis alerte les donneurs compatibles. Vous recevez un code pour suivre la mobilisation."
+      points={["Sans création de compte", "Donneurs compatibles alertés après validation", "Code de suivi pour voir les réponses"]}
+      tone="red"
+    >
 
       <form className="card" onSubmit={submit}>
         <h3 style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -144,6 +147,6 @@ export default function FamilyRequest() {
           Paiement simulé dans le prototype. La demande est validée avant diffusion.
         </p>
       </form>
-    </div>
+    </AuthShell>
   );
 }

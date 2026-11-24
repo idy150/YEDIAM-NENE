@@ -28,7 +28,7 @@ router.get(
     const donor = await getOwnDonor(req.user.id);
     if (!donor) throw new ApiError(404, 'Profil donneur introuvable');
 
-    const [urgentCount, positiveCount, donationCount] = await Promise.all([
+    const [urgentCount, positiveCount, donationCount, campaignCount] = await Promise.all([
       query(
         `SELECT COUNT(*)::int AS n FROM notifications n
          JOIN blood_requests r ON r.id = n.request_id
@@ -41,6 +41,10 @@ router.get(
       ),
       query(
         `SELECT COUNT(*)::int AS n FROM donations WHERE donor_id = $1 AND status = 'completed'`,
+        [donor.id]
+      ),
+      query(
+        `SELECT COUNT(*)::int AS n FROM campaign_participants WHERE donor_id = $1 AND status <> 'cancelled'`,
         [donor.id]
       ),
     ]);
@@ -62,6 +66,7 @@ router.get(
         urgent: urgentCount.rows[0].n,
         responded: positiveCount.rows[0].n,
         donations: donationCount.rows[0].n,
+        campaigns: campaignCount.rows[0].n,
       },
       history,
     });
