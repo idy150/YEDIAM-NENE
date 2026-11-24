@@ -8,6 +8,8 @@ import adminRoutes from './routes/admin.js';
 import hospitalRoutes from './routes/hospital.js';
 import donorRoutes from './routes/donor.js';
 import bloodbankRoutes from './routes/bloodbank.js';
+import campaignRoutes from './routes/campaigns.js';
+import financeRoutes from './routes/finance.js';
 
 const app = express();
 app.use(cors({ origin: config.corsOrigin, credentials: true }));
@@ -21,6 +23,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/hospital', hospitalRoutes);
 app.use('/api/donor', donorRoutes);
 app.use('/api/bloodbank', bloodbankRoutes);
+app.use('/api/campaigns', campaignRoutes);
+app.use('/api/finance', financeRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

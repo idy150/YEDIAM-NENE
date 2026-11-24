@@ -19,6 +19,8 @@ async function main() {
       '--disable-gpu',
       '--no-first-run',
       '--no-default-browser-check',
+      '--window-size=1280,900',
+      ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []),
       `--user-data-dir=${PROFILE}`,
       `--remote-debugging-port=${PORT}`,
       'about:blank',
@@ -101,10 +103,10 @@ async function main() {
 
     // 1. Rôles connectés
     const roles = [
-      { label: 'Super Admin', id: 'admin@yediam.mr', pwd: 'Admin123!', home: '/admin', checks: ['Dashboard national', 'Hôpitaux'] },
-      { label: 'Hôpital', id: 'admin.hnn@yediam.mr', pwd: 'Hopital123!', home: '/hopital', checks: ['Hôpital National', 'NOUVELLE DEMANDE URGENTE'] },
-      { label: 'Banque de sang', id: 'cnts@yediam.mr', pwd: 'Banque123!', home: '/banque', checks: ['Stocks par groupe', 'Poches en stock'] },
-      { label: 'Donneur', id: 'donneur1@yediam.mr', pwd: 'Donneur123!', home: '/donneur', checks: ['Mon groupe', 'Disponible pour donner'] },
+      { label: 'Super Admin', id: 'admin@yediam.mr', pwd: 'Admin123!', home: '/admin', extra: [['/admin/finances', ['Fonds solidaires', 'Soutien transport']], ['/admin/campagnes', ['Grande collecte de Nouakchott']]], checks: ['Dashboard national', 'Hôpitaux', 'Prévision des besoins'] },
+      { label: 'Hôpital', id: 'admin.hnn@yediam.mr', pwd: 'Hopital123!', home: '/hopital', extra: [['/hopital/campagnes', ['Nouvelle campagne']]], checks: ['Hôpital National', 'NOUVELLE DEMANDE URGENTE'] },
+      { label: 'Banque de sang', id: 'cnts@yediam.mr', pwd: 'Banque123!', home: '/banque', extra: [['/banque/campagnes', ['Grande collecte de Nouakchott']]], checks: ['Stocks par groupe', 'Poches en stock'] },
+      { label: 'Donneur', id: 'donneur1@yediam.mr', pwd: 'Donneur123!', home: '/donneur', extra: [['/donneur/campagnes', ['Je participe']], ['/donneur/urgences', ['Urgences']]], checks: ['Groupe O+', 'Disponible pour donner', 'Prochain don'] },
     ];
 
     for (const role of roles) {
@@ -123,13 +125,24 @@ async function main() {
       }
       await sleep(3000);
       await testPage(role.label, role.checks);
+      for (const [path, checks] of role.extra || []) {
+        await evaluate(`location.href = ${JSON.stringify(BASE)} + ${JSON.stringify(path)}`);
+        await sleep(2500);
+        await testPage(`${role.label} ${path}`, checks);
+      }
     }
 
     // 2. Pages publiques
     await evaluate(`location.href = ${JSON.stringify(BASE)}`);
     await sleep(2500);
     for (const [path, checks] of [
-      ['/', ['YEDIAM NENE', "J'AI BESOIN DE SANG", 'JE VEUX DONNER']],
+      ['/', ['YEDIAM NENE', 'J’ai besoin de sang', 'Je veux donner', 'Le sang reste gratuit']],
+      ['/campagnes', ['Collectes et sensibilisation', 'Grande collecte de Nouakchott']],
+      ['/campagnes/1', ['Utilisation des fonds de la campagne', 'Financer la logistique']],
+      ['/soutenir', ['Financer la solidarité', 'Moyen de paiement']],
+      ['/transparence', ['Chaque ouguiya est tracée', 'Dernières dépenses']],
+      ['/recu/YN-DEMO-0001', ['Montant', 'YN-DEMO-0001', 'Le sang reste gratuit']],
+      ['/suivi/YN-DEMO-2026', ['Suivre une demande', 'Demande reçue']],
       ['/besoin-urgent', ['Besoin urgent pour un proche', '100 MRU']],
       ['/adhesion-hopital', ["Nom de l'hôpital", 'Nom du responsable']],
       ['/inscription', ['Groupe sanguin (essentiel)']],

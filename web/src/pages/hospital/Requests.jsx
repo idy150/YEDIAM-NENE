@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Eye, Square, CheckCircle2 } from 'lucide-react';
+import { Eye, Square, CheckCircle2, HeartPulse } from 'lucide-react';
 import { api } from '../../api.js';
 import { Spinner, EmptyState, Modal, BloodBadge, UrgencyBadge, ReqStatusBadge, fmtDateTime } from '../../components/ui.jsx';
 import { TARGET } from '../../constants.js';
@@ -14,6 +14,11 @@ export default function HospRequests() {
   const openDetail = async (id) => {
     const d = await api(`/hospital/requests/${id}`);
     setDetail(d);
+  };
+
+  const confirmDonation = async (notificationId, outcome) => {
+    await api(`/hospital/notifications/${notificationId}/donation`, { method: 'POST', body: { outcome } });
+    openDetail(detail.request.id);
   };
 
   const act = async (fn, id) => {
@@ -67,6 +72,9 @@ export default function HospRequests() {
         {detail && (
           <>
             <p className="muted mb">
+              Les donneurs compatibles (groupe identique en priorité) ont été alertés. Confirmez chaque don pour mettre à jour l’historique du donneur.
+            </p>
+            <p className="muted mb">
               {detail.request.quantity} poches · {detail.request.service || '—'} · créée le {fmtDateTime(detail.request.created_at)}
             </p>
             {detail.responses.length === 0 ? (
@@ -79,9 +87,21 @@ export default function HospRequests() {
                     <div className="title">{n.donor_name}</div>
                     <div className="sub">{n.wilaya}{n.quartier ? ` · ${n.quartier}` : ''} · {n.telephone}</div>
                   </div>
-                  <span className="badge" style={{ background: n.response === 'positive' ? 'var(--green)' : 'var(--gray-light)', color: n.response === 'positive' ? '#fff' : 'var(--gray)' }}>
-                    {n.response === 'positive' ? '✓ Peut donner' : '✗ Non disponible'}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                    <span className="badge" style={{ background: n.response === 'positive' ? 'var(--green)' : 'var(--gray-light)', color: n.response === 'positive' ? '#fff' : 'var(--gray)' }}>
+                      {n.response === 'positive' ? '✓ Peut donner' : '✗ Non disponible'}
+                    </span>
+                    {n.response === 'positive' && (
+                      n.donation_status === 'completed' ? <span className="pill pill-green"><HeartPulse size={12} /> Don réalisé</span>
+                      : n.donation_status === 'cancelled' ? <span className="pill">Absent</span>
+                      : (
+                        <div className="row-actions">
+                          <button className="btn btn-green btn-sm" onClick={() => confirmDonation(n.id, 'completed')}><HeartPulse size={13} /> Don réalisé</button>
+                          <button className="btn btn-outline btn-sm" onClick={() => confirmDonation(n.id, 'cancelled')}>Absent</button>
+                        </div>
+                      )
+                    )}
+                  </div>
                 </div>
               ))
             )}

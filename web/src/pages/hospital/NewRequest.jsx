@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api.js';
 import { Alert, PageHead } from '../../components/ui.jsx';
-import { BLOOD_GROUPS, WILAYAS } from '../../constants.js';
+import { BLOOD_GROUPS, WILAYAS, COMPATIBLE_DONORS } from '../../constants.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function HospNewRequest() {
@@ -57,6 +57,13 @@ export default function HospNewRequest() {
               </button>
             ))}
           </div>
+          {form.blood_group && (
+            <div className="hint" style={{ marginTop: 8 }}>
+              Donneurs alertés : groupe <b>{form.blood_group}</b> en priorité, puis compatibles{' '}
+              {COMPATIBLE_DONORS[form.blood_group].filter((g) => g !== form.blood_group).join(', ') || '— (aucun autre)'} ·
+              uniquement disponibles et éligibles (dernier don &gt; 90 jours).
+            </div>
+          )}
         </div>
         <div className="grid-2">
           <div className="field">

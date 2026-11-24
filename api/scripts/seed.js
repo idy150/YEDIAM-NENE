@@ -25,7 +25,8 @@ async function main() {
 
   // 2. Nettoyage (ordre inverse des dépendances)
   await pool.query(`
-    TRUNCATE activity_logs, stock_movements, blood_bank_responses, donations,
+    TRUNCATE fund_expenses, transport_requests, contributions, campaign_participants, campaigns,
+             activity_logs, stock_movements, blood_bank_responses, donations,
              notifications, blood_requests, subscriptions, payments, blood_stocks,
              blood_banks, donors, hospitals, users RESTART IDENTITY CASCADE
   `);
@@ -244,8 +245,8 @@ async function main() {
   );
   // Demande famille en attente de validation
   await run(
-    `INSERT INTO blood_requests (requester_type, patient_name, family_contact, hospital_id, blood_group, quantity, urgency, status, wilaya)
-     VALUES ('family', 'Mariem Bint Ahmed', '+222 4612 0001', $1, 'O-', 2, 'immediate', 'pending', 'Nouakchott Sud')`,
+    `INSERT INTO blood_requests (requester_type, patient_name, family_contact, hospital_id, blood_group, quantity, urgency, status, wilaya, tracking_code)
+     VALUES ('family', 'Mariem Bint Ahmed', '+222 4612 0001', $1, 'O-', 2, 'immediate', 'pending', 'Nouakchott Sud', 'YN-DEMO-2026')`,
     [hospitalIds['Hôpital National de Nouakchott']]
   );
   await run(
@@ -295,6 +296,92 @@ async function main() {
      VALUES ($1, $2, NULL, CURRENT_DATE - interval '30 days', 'O+', 'completed')`,
     [donorIds['Khadija Mint'], hospitalIds['Hôpital National de Nouakchott']]
   );
+
+  // 11 bis. Historique des demandes sur 6 mois (alimente les statistiques et la prévision)
+  const histHospitals = [hospitalIds['Hôpital National de Nouakchott'], hospitalIds['Centre Hospitalier Mère et Enfant']];
+  const histGroups = ['O+', 'O+', 'O+', 'A+', 'A+', 'B+', 'O-', 'AB+', 'B-', 'A-'];
+  for (let m = 5; m >= 1; m--) {
+    const count = 3 + ((m * 7) % 4);
+    for (let i = 0; i < count; i++) {
+      const g = histGroups[(m * 3 + i) % histGroups.length];
+      await run(
+        `INSERT INTO blood_requests (requester_type, requester_id, hospital_id, blood_group, quantity, urgency, status, wilaya, service, created_at, closed_at)
+         VALUES ('hospital', $1, $1, $2, $3, $4, 'completed', 'Nouakchott Ouest', 'Urgences',
+                 now() - ($5 || ' months')::interval - ($6 || ' days')::interval,
+                 now() - ($5 || ' months')::interval - ($6 || ' days')::interval + interval '6 hours')`,
+        [histHospitals[i % 2], g, 2 + (i % 4), ['immediate', 'urgent', 'normal'][i % 3], m, i * 3]
+      );
+    }
+  }
+  console.log('✓ Historique des demandes (6 mois)');
+
+  // 11 ter. Campagnes, contributions solidaires, dépenses, soutien transport
+  const [camp1] = await run(
+    `INSERT INTO campaigns (title, description, type, wilaya, location, start_date, end_date, organizer_type, organizer_id,
+       organizer_name, target_donors, target_amount, target_groups, status, created_by)
+     VALUES ('Grande collecte de Nouakchott', 'Collecte nationale avec le CNTS : bus de collecte, collation offerte et transport pris en charge pour les donneurs.',
+       'collecte', 'Nouakchott Ouest', 'Place de la Liberté', CURRENT_DATE - 3, CURRENT_DATE + 14, 'blood_bank', $1,
+       'Centre National de Transfusion Sanguine', 150, 250000, ARRAY['O+','O-','A+'], 'active', 1) RETURNING id`,
+    [bankIds['Centre National de Transfusion Sanguine']]
+  );
+  const [camp2] = await run(
+    `INSERT INTO campaigns (title, description, type, wilaya, location, start_date, end_date, organizer_type, organizer_id,
+       organizer_name, target_donors, target_amount, status, created_by)
+     VALUES ('Maternité : chaque goutte compte', 'Mobilisation des donneurs O- et A- pour les urgences obstétricales du Centre Mère et Enfant.',
+       'collecte', 'Nouakchott Nord', 'Centre Hospitalier Mère et Enfant', CURRENT_DATE, CURRENT_DATE + 30, 'hospital', $1,
+       'Centre Hospitalier Mère et Enfant', 60, 80000, 'active', 1) RETURNING id`,
+    [hospitalIds['Centre Hospitalier Mère et Enfant']]
+  );
+  const [camp3] = await run(
+    `INSERT INTO campaigns (title, description, type, wilaya, location, start_date, end_date, organizer_type, organizer_name,
+       target_donors, target_amount, status, created_by)
+     VALUES ('Universités solidaires', 'Sensibilisation au don de sang dans les universités et lycées de Nouakchott.',
+       'sensibilisation', 'Nouakchott Ouest', 'Université de Nouakchott', CURRENT_DATE - 40, CURRENT_DATE - 10, 'admin', 'YEDIAM NENE',
+       0, 40000, 'completed', 1) RETURNING id`
+  );
+  for (const [donorName, status] of [['Amadou Diallo', 'registered'], ['Fatou Sow', 'registered'], ['Mamadou Barry', 'donated'], ['Yacine Diop', 'registered']]) {
+    await run(`INSERT INTO campaign_participants (campaign_id, donor_id, status) VALUES ($1, $2, $3)`, [camp1.id, donorIds[donorName], status]);
+  }
+  await run(`INSERT INTO campaign_participants (campaign_id, donor_id) VALUES ($1, $2)`, [camp2.id, donorIds['Hawa Camara']]);
+
+  const contributions = [
+    ['YN-DEMO-0001', camp1.id, 'sponsoring', 'company', 'Mauritel', false, 100000, 'bank_transfer', 'Fiers de soutenir la grande collecte.', 9],
+    ['YN-DEMO-0002', camp1.id, 'campaign', 'individual', 'Aïssata Diallo', false, 2000, 'bankily', 'Pour ma mère, sauvée grâce aux donneurs.', 6],
+    ['YN-DEMO-0003', camp1.id, 'campaign', 'individual', 'Sidi Mohamed', true, 5000, 'masrivi', null, 4],
+    ['YN-DEMO-0004', camp2.id, 'sponsoring', 'ngo', 'Croissant-Rouge (démo)', false, 30000, 'bank_transfer', null, 3],
+    ['YN-DEMO-0005', null, 'transport', 'company', 'Société Générale Mauritanie (démo)', false, 25000, 'bank_transfer', 'Fonds transport des donneurs.', 20],
+    ['YN-DEMO-0006', null, 'general', 'individual', 'Oumar Sy', false, 1500, 'sedad', null, 2],
+    ['YN-DEMO-0007', camp3.id, 'campaign', 'company', 'Chinguitel (démo)', false, 40000, 'bank_transfer', null, 45],
+    ['YN-DEMO-0008', camp2.id, 'campaign', 'individual', 'Mariem Mint Ahmed', true, 3000, 'bankily', 'Merci aux donneurs !', 1],
+  ];
+  for (const [ref, campaignId, purpose, type, name, anon, amount, method, message, daysAgo] of contributions) {
+    await run(
+      `INSERT INTO contributions (reference, campaign_id, purpose, contributor_type, contributor_name, contributor_phone, anonymous,
+         amount, payment_method, status, provider_reference, message, created_at, paid_at)
+       VALUES ($1,$2,$3,$4,$5,'+222 4600 0000',$6,$7,$8,'paid','SIM-' || $1,$9, now() - ($10 || ' days')::interval, now() - ($10 || ' days')::interval)`,
+      [ref, campaignId, purpose, type, name, anon, amount, method, message, daysAgo]
+    );
+  }
+  const expenses = [
+    ['DEP-DEMO-0001', camp3.id, 'communication', 18000, 'Affiches et sessions de sensibilisation (3 universités)', 'Imprimerie Al Amal', 30],
+    ['DEP-DEMO-0002', camp3.id, 'collation', 9500, 'Collations pour les étudiants volontaires', 'Traiteur Nouakchott', 25],
+    ['DEP-DEMO-0003', camp1.id, 'logistique', 35000, 'Location du bus de collecte (2 semaines)', 'Transports Errahma', 2],
+    ['DEP-DEMO-0004', camp1.id, 'collation', 6000, 'Jus et biscuits pour les donneurs — jour 1', 'Supermarché Atlas', 1],
+    ['DEP-DEMO-0005', null, 'transport', 1500, 'Soutien transport donneur', 'Amadou Diallo', 5],
+  ];
+  for (const [ref, campaignId, cat, amount, desc, benef, daysAgo] of expenses) {
+    await run(
+      `INSERT INTO fund_expenses (reference, campaign_id, category, amount, description, beneficiary, spent_at, recorded_by)
+       VALUES ($1,$2,$3,$4,$5,$6, CURRENT_DATE - $7::int, 1)`,
+      [ref, campaignId, cat, amount, desc, benef, daysAgo]
+    );
+  }
+  await run(
+    `INSERT INTO transport_requests (donor_id, request_id, amount, note, status)
+     VALUES ($1, $2, 800, 'Taxi aller-retour Dar Naïm → Hôpital National', 'pending')`,
+    [donorIds['Fatou Sow'], reqActive.id]
+  );
+  console.log('✓ Campagnes, contributions, dépenses et soutien transport');
 
   // 12. Journaux d'activité
   const actions = [
